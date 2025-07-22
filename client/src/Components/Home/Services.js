@@ -15,11 +15,7 @@ function Services() {
               <div className="card-body">
                 <h5 className="card-title">Convert</h5>
                 <p className="card-text">
-                  Want to convert audio or text into Indian Sign Language?
-                  Then, you are in the right place! Provide your audio by
-                  speaking into your mic or type the text that you want to
-                  convert into ISL and within a few clicks watch the magic
-                  happen!
+                  Converting audio or text into Indian Sign Language.
                 </p>
               </div>
               <div className="card-footer p-0 m-0" style={{ border: "none" }}>
@@ -40,10 +36,7 @@ function Services() {
               <div className="card-body">
                 <h5 className="card-title">Learn Sign</h5>
                 <p className="card-text">
-                  Curious about Indian Sign Language? Then, learn ISL from us!
-                  Select a sign from the list, watch it as many times as you
-                  want and learn ISL. Learning something is always a good
-                  thing, you know!
+                  Select a sign from the list, watch it as many times as we want.
                 </p>
               </div>
               <div className="card-footer p-0 m-0" style={{ border: "none" }}>

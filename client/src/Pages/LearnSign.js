@@ -8,6 +8,9 @@ import xbot from '../Models/xbot/xbot.glb';
 import ybot from '../Models/ybot/ybot.glb';
 import xbotPic from '../Models/xbot/xbot.png';
 import ybotPic from '../Models/ybot/ybot.png';
+import businessMan from '../Models/buisness_man_with_talking_animation.glb';
+import vrGallery from '../Models/vr_modern_gallery_room.glb';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 import * as words from '../Animations/words';
 import * as alphabets from '../Animations/alphabets';
@@ -17,7 +20,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 
 function LearnSign() {
-  const [bot, setBot] = useState(ybot);
+  const [bot, setBot] = useState(businessMan); // Use the realistic avatar by default
   const [speed, setSpeed] = useState(0.1);
   const [pause, setPause] = useState(800);
 
@@ -33,27 +36,60 @@ function LearnSign() {
     ref.characters = [];
 
     ref.scene = new THREE.Scene();
-    ref.scene.background = new THREE.Color(0xdddddd);
+    ref.scene.background = new THREE.Color(0xa0a0a0);
 
-    const spotLight = new THREE.SpotLight(0xffffff, 2);
-    spotLight.position.set(0, 5, 5);
-    ref.scene.add(spotLight);
-
-    ref.camera = new THREE.PerspectiveCamera(
-        30,
-        window.innerWidth*0.57 / (window.innerHeight - 70),
-        0.1,
-        1000
-    )
+    // Add ambient and directional light for realism
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    ref.scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(5, 10, 7.5);
+    directionalLight.castShadow = true;
+    ref.scene.add(directionalLight);
 
     ref.renderer = new THREE.WebGLRenderer({ antialias: true });
+    ref.camera = new THREE.PerspectiveCamera(
+        30,
+        window.innerWidth * 0.57 / (window.innerHeight - 70),
+        0.1,
+        1000
+    );
     ref.renderer.setSize(window.innerWidth * 0.57, (window.innerHeight - 70));
     document.getElementById("canvas").innerHTML = "";
     document.getElementById("canvas").appendChild(ref.renderer.domElement);
 
-    ref.camera.position.z = 1.6;
-    ref.camera.position.y = 1.4;
+    // Add OrbitControls
+    ref.controls = new OrbitControls(ref.camera, ref.renderer.domElement);
+    ref.controls.enableDamping = true;
+    ref.controls.dampingFactor = 0.05;
+    ref.controls.target.set(-2, 1, 0);
 
+    ref.camera.position.set(0, 3, 7);
+    ref.controls.target.set(-2, 1, 0);
+
+    // Load the environment (vr modern gallery)
+    const envLoader = new GLTFLoader();
+    envLoader.load(
+      vrGallery,
+      (gltf) => {
+        gltf.scene.position.set(0, 0, 0);
+        gltf.scene.scale.set(1, 1, 1);
+        gltf.scene.traverse((child) => {
+          if (child.isMesh) {
+            console.log('Mesh name:', child.name);
+            if (child.name === 'Cube' || child.name === 'RectangularObject') {
+              child.position.x = 2;
+            }
+          }
+        });
+        ref.scene.add(gltf.scene);
+      },
+      undefined,
+      (error) => {
+        console.error('Error loading environment:', error);
+      }
+    );
+
+    // Load the avatar (business man)
     let loader = new GLTFLoader();
     loader.load(
       bot,
@@ -62,8 +98,10 @@ function LearnSign() {
           if ( child.type === 'SkinnedMesh' ) {
             child.frustumCulled = false;
           }
-    });
+        });
         ref.avatar = gltf.scene;
+        ref.avatar.position.set(-2, 0, 0);
+        ref.avatar.scale.set(1, 1, 1);
         ref.scene.add(ref.avatar);
         defaultPose(ref);
       },
@@ -72,6 +110,18 @@ function LearnSign() {
       }
     );
 
+    // Start a continuous render loop for OrbitControls
+    ref.orbitRender = function orbitRenderLoop() {
+      if (ref.controls) ref.controls.update();
+      ref.renderer.render(ref.scene, ref.camera);
+      ref.orbitFrame = requestAnimationFrame(ref.orbitRender);
+    };
+    ref.orbitRender();
+
+    // Clean up on unmount
+    return () => {
+      if (ref.orbitFrame) cancelAnimationFrame(ref.orbitFrame);
+    };
   }, [ref, bot]);
 
   ref.animate = () => {

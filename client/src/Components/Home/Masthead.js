@@ -7,18 +7,10 @@ function Masthead() {
         className="row d-flex justify-content-center align-items-center"
         style={{ flexDirection: "column" }}
       >
-        <div className="col-lg-7 text-white font-weight-bold display-1 text-center">
-          SignPop!
+        <div className="col-12 d-flex justify-content-center">
+          <span className="text-white font-weight-bold display-1 text-center">SignPop!</span>
         </div>
         <div className="col-lg-4 divider my-4" />
-        <div
-          className="col-lg-7 container text-white-50 lead text-center"
-          style={{ fontSize: "5rem !important" }}
-        >
-          The complete toolkit for Indian Sign Language. Explore our range of
-          features which have been carefully designed keeping in mind the
-          specific needs of people related to ISL.
-        </div>
         <div className="d-flex justify-content-center mt-5">
           <a className="btn btn-info btn-lg px-3" href="#intro">
             Get Started <i className="fa fa-angle-down" />

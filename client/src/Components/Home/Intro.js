@@ -13,11 +13,7 @@ function Intro() {
             <div className="col-lg-4 divider my-2" />
             <div className="text-center normal-text">
               A comprehensive and aesthetic Indian Sign Language toolkit. A
-              minimalist yet informative interface. Wide range of features
-              containing different functionalities that are necessary to work
-              with ISL. What else do you need anyway! We have everything wrapped
-              up here! <br /> Dive into our diverse services and let us know
-              about your experience!
+              minimalist yet informative interface. 
             </div>
           </div>
         </div>

@@ -15,12 +15,15 @@ import { defaultPose } from '../Animations/defaultPose';
 
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import businessMan from '../Models/buisness_man_with_talking_animation.glb';
+import vrGallery from '../Models/vr_modern_gallery_room.glb';
 
 function Convert() {
   const [text, setText] = useState("");
-  const [bot, setBot] = useState(ybot);
+  const [bot, setBot] = useState(businessMan); // Use the realistic avatar by default
   const [speed, setSpeed] = useState(0.1);
   const [pause, setPause] = useState(800);
 
@@ -45,11 +48,16 @@ function Convert() {
     ref.characters = [];
 
     ref.scene = new THREE.Scene();
-    ref.scene.background = new THREE.Color(0xdddddd);
+    ref.scene.background = new THREE.Color(0xa0a0a0); // light gray background
 
-    const spotLight = new THREE.SpotLight(0xffffff, 2);
-    spotLight.position.set(0, 5, 5);
-    ref.scene.add(spotLight);
+    // Add ambient and directional light for realism
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    ref.scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(5, 10, 7.5);
+    directionalLight.castShadow = true;
+    ref.scene.add(directionalLight);
+
     ref.renderer = new THREE.WebGLRenderer({ antialias: true });
 
     ref.camera = new THREE.PerspectiveCamera(
@@ -63,9 +71,41 @@ function Convert() {
     document.getElementById("canvas").innerHTML = "";
     document.getElementById("canvas").appendChild(ref.renderer.domElement);
 
-    ref.camera.position.z = 1.6;
-    ref.camera.position.y = 1.4;
+    // Add OrbitControls
+    ref.controls = new OrbitControls(ref.camera, ref.renderer.domElement);
+    ref.controls.enableDamping = true;
+    ref.controls.dampingFactor = 0.05;
+    ref.controls.target.set(0, 1, 0); // focus on avatar's head/center
 
+    ref.camera.position.set(0, 2, 3); // Move camera back and up for better view
+    ref.controls.target.set(0, 1, 0); // Focus on avatar's head/center
+
+    // Load the environment (vr modern gallery)
+    const envLoader = new GLTFLoader();
+    envLoader.load(
+      vrGallery,
+      (gltf) => {
+        gltf.scene.position.set(0, 0, 0); // Adjust as needed
+        gltf.scene.scale.set(1, 1, 1); // Adjust scale if needed
+        // Try to move the rectangular object to the right
+        gltf.scene.traverse((child) => {
+          if (child.isMesh) {
+            console.log('Mesh name:', child.name); // Log all mesh names
+            // Example: Move a mesh named 'Cube' to the right
+            if (child.name === 'Cube' || child.name === 'RectangularObject') {
+              child.position.x = 2; // Move to the right
+            }
+          }
+        });
+        ref.scene.add(gltf.scene);
+      },
+      undefined,
+      (error) => {
+        console.error('Error loading environment:', error);
+      }
+    );
+
+    // Load the avatar (business man)
     let loader = new GLTFLoader();
     loader.load(
       bot,
@@ -74,8 +114,10 @@ function Convert() {
           if ( child.type === 'SkinnedMesh' ) {
             child.frustumCulled = false;
           }
-    });
+        });
         ref.avatar = gltf.scene;
+        ref.avatar.position.set(-2, 0, 0); // Move avatar to the left
+        ref.avatar.scale.set(1, 1, 1); // Adjust scale if needed
         ref.scene.add(ref.avatar);
         defaultPose(ref);
       },
@@ -84,6 +126,22 @@ function Convert() {
       }
     );
 
+    // Adjust camera for full body visibility
+    ref.camera.position.set(0, 3, 7);
+    ref.controls.target.set(-2, 1, 0); // Focus on avatar's head/center
+
+    // Start a continuous render loop for OrbitControls
+    ref.orbitRender = function orbitRenderLoop() {
+      if (ref.controls) ref.controls.update();
+      ref.renderer.render(ref.scene, ref.camera);
+      ref.orbitFrame = requestAnimationFrame(ref.orbitRender);
+    };
+    ref.orbitRender();
+
+    // Clean up on unmount
+    return () => {
+      if (ref.orbitFrame) cancelAnimationFrame(ref.orbitFrame);
+    };
   }, [ref, bot]);
 
   ref.animate = () => {
@@ -125,6 +183,8 @@ function Convert() {
       }, pause);
       ref.animations.shift();
     }
+    // Update orbit controls
+    if (ref.controls) ref.controls.update();
     ref.renderer.render(ref.scene, ref.camera);
   }
 
